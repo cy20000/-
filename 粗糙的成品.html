@@ -1,0 +1,323 @@
+<html>
+
+<head>
+    <style>
+        #aside{
+            background-color: rgb(133, 189, 211);
+            color: rgb(0, 0, 0);
+            float:left;
+            line-height: 40px;
+            width: 30%;
+            margin: 0;
+            padding:0; 
+            height:100%;
+        }
+        #game{
+            background-color: rgb(	169,169,169);
+            color: white;
+            float: right;
+            width: 69.5%;
+            margin: 0;
+            padding:0; 
+            height:100%;
+        }
+        #bodya{
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body bgcolor="black" id="bodya">
+    
+    <div id="aside">
+        <p style="font-size: 30px; margin-left:15%;" id= "scores">Your score:0 </p>
+    </div>
+
+    <div id="game">
+        <p style="font-size: 40px; margin-left:10%;color: black;" id= "introduction"> Tap the "Enter" to create your bricks and ball.
+        <br/> And tap the "blankspace" to start your game.
+        <br/> Use "⬅" and "➡" to control your board.
+        <br/> To win, you have to keep the ball in your screen and break the bricks.
+        <br/> If you want restart the game, tap the "F5".
+        <br/>
+        <br/> This game has lots of bugs and drawbacks.
+        <br/> For example, you will find your ball goes in the same way each time. :)
+        </p>
+        <canvas id="thebrick"  ></canvas>
+        <canvas id="onlyball" ></canvas>
+        <canvas id="onlyboard" ></canvas>
+        <script type="text/javascript">
+            var c=document.getElementById("thebrick");
+            var cwid,chei;
+            var canCon=c.getContext("2d");
+
+            var d=document.getElementById("onlyball");
+            var another=d.getContext("2d");
+
+            var e=document.getElementById("onlyboard");
+            var theother=e.getContext("2d");
+
+            var score=0;
+            ~function(){
+                cwid=window.innerWidth;
+                chei=window.innerHeight;
+                chei=chei;
+                c.width=cwid*0.69;
+                c.height=chei;
+                d.width=cwid*0.69;
+                d.height=chei;
+                e.width=cwid*0.69;
+                e.height=chei;
+                c.style.position="absolute";
+                d.style.position="absolute";
+                e.style.position="absolute";
+            }();
+
+            var bricks= new Array();
+            var flag =new Array();
+
+            function randomColor() { 
+		    return '#'+('00000'+(Math.random()*0x1000000<<0).toString(16)).slice(-6);
+	        }
+            //碰撞判定
+            function collision_with_brick_x(){
+                for(var k=0;k<40;k++){
+                    if(flag[k]&&(Math.floor(bricks[k].x)==Math.floor(ball.x)+ball.r||Math.floor(ball.x)-ball.r==Math.floor(bricks[k].x)+Math.floor(cwid*0.69/10))&&(ball.y>=bricks[k].y&&ball.y<=bricks[k].y+chei/10)){
+                        flag[k]=0;
+                        bricks[k].color="#A9A9A9";
+                        bricks[k].draw();
+                        score++;
+                        document.getElementById("scores").innerHTML='Your score:'+score;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            function collision_with_brick_y(){
+                for(var k=0;k<40;k++){
+                    if(flag[k]&&(Math.floor(bricks[k].y)==Math.floor(ball.y)+ball.r||Math.floor(ball.y)-ball.r==Math.floor(bricks[k].y)+Math.floor(chei/10))&&(ball.x>=bricks[k].x&&ball.x<=bricks[k].x+cwid*0.69/10)){
+                        flag[k]=0;
+                        bricks[k].color="#A9A9A9";
+                        bricks[k].draw();
+                        score++;
+                        document.getElementById("scores").innerHTML='Your score:'+score;
+                        return true;
+                    }
+                }
+                return false;
+            }
+            function collision_with_board_x(){
+                if((Math.floor(board.x)==Math.floor(ball.x)+ball.r||Math.floor(ball.x)-ball.r==Math.floor(board.x)+Math.floor(cwid*0.69/10))&&(ball.y>=board.y&&ball.y<=board.y+chei/25)){
+                        return true;
+                   }
+            }
+            function collision_with_board_y(){
+                if((Math.floor(board.y)==Math.floor(ball.y)+ball.r)&&(ball.x>=board.x&&ball.x<=board.x+cwid*0.69/10)){
+                        return true;
+                    }
+            }
+            //砖块
+            var i=0;
+            function Brick(){};
+                Brick.prototype={
+                    init: function(){
+                        i++;
+                        this.wid=cwid*0.69/10;
+                        this.hei=Math.floor(chei/10);
+                        this.x=(i-1)%10*this.wid; 
+                        this.y=Math.floor((i-1)/10)*this.hei;
+                        this.color=randomColor();
+                    },
+                    draw: function(){
+                        canCon.fillStyle=this.color;
+                        canCon.fillRect(this.x,this.y,this.wid,this.hei);
+                        canCon.fill();
+                    }
+                }
+
+            function createbrick(row){
+                for(var j=1;j<=row*10;j++){
+                    var brick= new Brick();
+                    brick.init();
+                    brick.draw();
+                    bricks[j-1]=brick;
+                    flag[j-1]=1;
+                }
+            }
+
+            
+            //板
+            function Board(){};
+                Board.prototype={
+                    init: function(){
+                        this.wid=cwid*0.69/10;
+                        this.hei=chei/25;
+                        this.x=cwid*0.5*0.69-this.wid/2;
+                        this.y=chei*0.8+20;
+                        this.color="black";
+                    },
+                    draw: function(){
+                        theother.fillStyle=this.color;
+                        theother.stroke();
+                        theother.fillRect(this.x,this.y,this.wid,this.hei);
+                        theother.fill();
+                    },
+                    moveleft: function(){
+                        theother.clearRect(0,0,cwid*0.69,chei);
+                        if(this.x>0){
+                            this.x = this.x-2;
+                        }
+                        this.draw();
+                    },
+                    moveright: function(){
+                        theother.clearRect(0,0,cwid*0.69,chei);
+                        if(this.x+this.wid<cwid*0.69){
+                            this.x = this.x+2;
+                        }
+                        this.draw();
+                    }
+                }
+                
+            var board =new Board();
+
+            function createboard(){
+                
+                board.init();
+                board.draw();
+            }
+ 
+            //球
+            function Ball(){};
+                Ball.prototype={
+                    init: function(){
+                        this.x=cwid*0.5*0.69;
+                        this.y=chei*0.8;
+                        this.r=10;
+                        this.color="white";
+                        this.vx=-1;
+                        this.vy=-1;
+                    },
+                    draw: function(){
+                        another.fillStyle=this.color;
+                        another.beginPath();
+                        another.arc(this.x,this.y,this.r,0,Math.PI*2,true);
+                        another.closePath();
+                        another.fill();
+                        
+                    },
+                    move: function(){
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        var a=collision_with_brick_x();
+                        var b=collision_with_brick_y();
+                        if(this.x-this.r<0||this.x+this.r>cwid*0.69||a||collision_with_board_x()) {
+                            this.vx=0-this.vx;
+                        }
+                        if(this.y-this.r<0||b||collision_with_board_y()){
+                            this.vy=0-this.vy;
+                        }
+                        this.draw();
+                        if(this.y-this.r>chei){
+                            clearInterval(time);
+                            canCon.clearRect(0,0,cwid,chei);
+                            another.clearRect(0,0,cwid,chei);
+                            theother.clearRect(0,0,cwid,chei);
+                            var end=document.createElement("p");
+                            var t=document.createTextNode("Your Final Score is "+score+'.'+'\n'+"It's a difficult game, right? :)");
+                            end.appendChild(t);
+                            end.setAttribute('style','font-size: 40px; margin-left:10%;color: black;');
+                            document.getElementById("game").appendChild(end);
+
+                        }
+                    }
+                }
+            
+            var ball =new Ball();
+
+            function createball(){
+                ball.init();
+                ball.draw();
+            }
+            
+            //球开始运动
+            var time;
+            function begin(){
+                time=setInterval(function(){
+                    another.clearRect(0,0,cwid*0.69,chei);
+                    ball.move();
+                }, 1);
+            }
+            
+            //回车键生成砖块、球和板，空格键开始游戏
+            var gamestart=0;
+            var ballmove=0;
+            
+            window.onkeypress=function(){
+                if(event.which==13&&gamestart==0){
+                    var f=document.getElementById("introduction");
+                    f.parentNode.removeChild(f);
+                    createbrick(4);
+                    createboard();
+                    createball();
+                    gamestart=1;
+                    
+                }
+                if(event.which==32&&ballmove==0&&gamestart==1){
+                    begin();
+                    ballmove=1;
+                   
+                }
+            }
+            
+            //板的左右移动控制
+            var time1;
+            var time2;
+            function boardmoveleft(){
+                time1=setInterval(function(){
+                    board.moveleft();
+                },1);
+            }
+            function boardmoveright(){
+                time2=setInterval(function(){
+                    board.moveright();
+                },1);
+            }
+            
+            var boardmoveleftornot=0;
+            var boardmoverightornot=0;
+            window.onkeydown=function(){
+                
+                if(event.which==37 &&gamestart==1&&boardmoveleftornot==0){
+                    boardmoveleft();
+                    boardmoveleftornot=1;
+                }
+                if(event.which==39 &&gamestart==1&&boardmoverightornot==0){
+                    boardmoveright();
+                    boardmoverightornot=1;
+                }
+            }
+            
+            function stopboardmoveleft(){
+                clearInterval(time1);
+            }
+            function stopboardmoveright(){
+                clearInterval(time2);
+            }
+            window.onkeyup=function(){
+
+                
+                if(event.which==37 &&gamestart==1){
+                    stopboardmoveleft();
+                    boardmoveleftornot=0;
+                }
+                if(event.which==39 &&gamestart==1){
+                    stopboardmoveright();
+                    boardmoverightornot=0;
+                }
+            }
+
+        </script>
+    </div>
+
+</body>
+</html>
